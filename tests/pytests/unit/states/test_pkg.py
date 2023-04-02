@@ -1217,3 +1217,33 @@ def test_latest_no_change_windows():
     with patch.dict(pkg.__salt__, salt_dict):
         ret = pkg.latest(pkg_name)
         assert ret.get("result", False) is True
+
+
+def test__get_installable_versions_no_version_found():
+    mock_latest_versions = MagicMock(return_value={})
+    mock_list_repo_pkgs = MagicMock(return_value={})
+    with patch.dict(
+        pkg.__salt__,
+        {
+            "pkg.latest_version": mock_latest_versions,
+            "pkg.list_pkgs": mock_list_repo_pkgs,
+        },
+    ), patch.dict(pkg.__opts__, {"test": True}):
+        expected = {"dummy": {"new": "installed", "old": ""}}
+        ret = pkg._get_installable_versions({"dummy": None}, current=None)
+        assert ret == expected
+
+
+def test__get_installable_versions_version_found():
+    mock_latest_versions = MagicMock(return_value={"dummy": "1.0.1"})
+    mock_list_repo_pkgs = MagicMock(return_value={})
+    with patch.dict(
+        pkg.__salt__,
+        {
+            "pkg.latest_version": mock_latest_versions,
+            "pkg.list_pkgs": mock_list_repo_pkgs,
+        },
+    ), patch.dict(pkg.__opts__, {"test": True}):
+        expected = {"dummy": {"new": "1.0.1", "old": ""}}
+        ret = pkg._get_installable_versions({"dummy": None}, current=None)
+        assert ret == expected
